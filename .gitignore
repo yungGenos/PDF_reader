@@ -1,3 +1,8 @@
 .venv
 *.pdf
 *.PDF
+build
+dist
+__pycache__
+*.pyc
+*.spec
