@@ -4,7 +4,6 @@ import io
 from PIL import Image
 import re
 
-# Configura o caminho do Tesseract
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 def extract_images_from_pdf(pdf_path):
@@ -17,7 +16,7 @@ def extract_images_from_pdf(pdf_path):
     for page_num in range(len(pdf_document)):
         page = pdf_document.load_page(page_num)
         image_list = page.get_images(full=True)
-        # Se houver mais de uma imagem por página, pode-se adaptar o código para iterar sobre todas
+        
         for img_index, img in enumerate(image_list):
             xref = img[0]
             base_image = pdf_document.extract_image(xref)
@@ -46,25 +45,25 @@ def extrair_numero_matricula(text):
             match = re.search(r'\d[\d\.\-\/]*', line)
             if match:
                 return match.group(0)
-            # Caso não encontre, tenta na linha anterior
+           
             if i > 0:
                 match = re.search(r'\d[\d\.\-\/]*', lines[i-1])
                 if match:
                     return match.group(0)
-            # Tenta na linha seguinte
+           
             if i < len(lines)-1:
                 match = re.search(r'\d[\d\.\-\/]*', lines[i+1])
                 if match:
                     return match.group(0)
     return None
 
-# Caminho para o PDF
+
 pdf_path = "Matricula_2025021010155139376025857.pdf"
 
-# Extrai as imagens (páginas) do PDF
+
 images = extract_images_from_pdf(pdf_path)
 
-# Para cada página, extrai o texto e procura pela palavra "matricula"
+
 for page_num, image in images:
     print(f"Processando a página {page_num+1}...")
     text = extract_text_from_image(image)
