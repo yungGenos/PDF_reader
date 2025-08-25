@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import filedialog, ttk, colorchooser
 from cvteste import processar_pdf
+from tkinter import messagebox
 
 palavras_chave = [
     "matricula", "número", "rua", "lote", "quadra", "cidade", "estado", "área", "privativa", "comum", "total", 
@@ -10,10 +11,24 @@ palavras_chave = [
     "rural", "urbano", "área", "terreno", "predio", "prédio", "sala", "loja", "galpão", "galpao", "construida", 
     "construída", "construcao", "APP", "app", "área",
     "APP", "app", "área", "fração", "ideal", "fração ideal", "fração de terreno", "fração de terreno ideal",
-    "fração ", "fracao", "fracao ideal", "fracao de terreno", "fracao de terreno ideal", "fracao ideal",
+    "fração ", "fracao", "fracao ideal", "fracao de terreno", "fracao de terreno ideal", "fracao ideal",'multifamiliaridade', 
+    "servidão","contaminante", "contaminação", "reabilitada","marinha","ambiental",
+    # Novas palavras adicionadas
+    "casa", "construção", "construcao", "construído", "construido", "construiu", "sobrado", "prédio", "predio", 
+    "residência", "residencia", "residencial"
 ]
 
+palavras_chave2 = [
+    'logradouro', 'número', 'bairro', 'cidade', 'estado', 'cep',
+    'log.', 'n.', 'bairro', 'cidade', 'estado', 'cep',
+    'endereço', 'end.', 'end', 'Imóvel', 'imovel', 'imóvel'
+]
+
+palavras_atencao_list = ['multifamiliaridade', "servidão", "contaminante", "contaminação", "reabilitada","marinha","ambiental"]
+
+
 class PDFReaderApp:
+    
     def __init__(self, root):
         self.root = root
         self.root.title("PDF Reader")
@@ -43,11 +58,13 @@ class PDFReaderApp:
         self.process_button = ttk.Button(root, text="Processar PDFs", command=self.process_pdf)
         self.process_button.pack(pady=10)
         
+        
         self.progress = ttk.Progressbar(root, orient="horizontal", length=400, mode="determinate")
         self.progress.pack(pady=10)
         
         self.status_label = ttk.Label(root, text="", font=("Arial", 10), foreground="green")
         self.status_label.pack(pady=5)
+
 
     def upload_files(self):
         files = filedialog.askopenfilenames(filetypes=[("PDF files", "*.pdf")])
@@ -75,7 +92,7 @@ class PDFReaderApp:
         self.progress["maximum"] = len(self.pdf_files)
         
         for i, pdf_file in enumerate(self.pdf_files):
-            processar_pdf(pdf_file, f'pdf_destacado_{i + 1}.pdf', palavras_chave, self.palavra_especifica, self.cor_especifica)
+            self.processar = processar_pdf(pdf_file, f'pdf_destacado_{i + 1}.pdf', palavras_atencao_list, palavras_chave, self.palavra_especifica, self.cor_especifica)
             self.progress["value"] = i + 1
             self.status_label.config(text=f"Processado: {pdf_file.split('/')[-1]}")
             self.root.update_idletasks()
@@ -83,8 +100,40 @@ class PDFReaderApp:
         self.status_label.config(text="Processamento concluído!", foreground="green")
         self.pdf_files.clear()
         self.update_file_listbox()
+        if len(self.processar) > 0:
+            self.alert_box("Atenção", f"Atenção foi encontrado {len(self.processar)} palavras de atenção: {self.processar}.")
+        
+    def process_pdf_iptu(self):
+        if not self.pdf_files:
+            self.status_label.config(text="Nenhum arquivo selecionado!", foreground="red")
+            return
+
+        self.palavra_especifica = [palavra.strip() for palavra in self.palavra_entry.get().split(',')]
+
+        self.progress["maximum"] = len(self.pdf_files)
+        
+        for i, pdf_file in enumerate(self.pdf_files):
+            self.processar, self.request = processar_pdf(pdf_file, f'pdf_destacado_{i + 1}.pdf', palavras_chave2, self.palavra_especifica, self.cor_especifica)
+            self.progress["value"] = i + 1
+            self.status_label.config(text=f"Processado: {pdf_file.split('/')[-1]}")
+            self.root.update_idletasks()
+            self.texto = f"""CEP: {self.request['cep']}\nLogradouro: {self.request['logradouro']}\nUF: {self.request['uf']}\nbairro: {self.request['bairro']}\nestado: {self.request['estado']}\nlocalidade: {self.request['localidade']}\n"""
+            self.output_text.insert(tk.END, self.texto)
+            # print(self.processar)  # Adiciona esta linha para mostrar o dict do processar
+        self.status_label.config(text="Processamento concluído!", foreground="green")
+        self.pdf_files.clear()
+        self.update_file_listbox()
+        self.message_box('Encontrado',self.processar)
+
+    def message_box(self, title, message):
+        messagebox.showinfo(title, message)
+        
+    def alert_box(self, title, message):
+        messagebox.showwarning(title, message)
 
 if __name__ == "__main__":
     root = tk.Tk()
+    # root.iconbitmap('icons8-pdf-50.png')
     app = PDFReaderApp(root)
     root.mainloop()
+    root.update()
